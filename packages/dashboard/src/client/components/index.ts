@@ -7,6 +7,7 @@
 export { OverviewTab } from './OverviewTab';
 export { PatternsTab } from './patterns';
 export { ContractsTab } from './contracts';
+export { BoundariesTab } from './boundaries';
 export { ViolationsTab } from './violations';
 export { FilesTab } from './FilesTab';
 export { SettingsTab } from './SettingsTab';
@@ -20,6 +21,9 @@ export * from './violations';
 
 // Contract sub-components for advanced usage
 export * from './contracts';
+
+// Boundary sub-components for advanced usage
+export * from './boundaries';
 
 // Trend sub-components
 export * from './trends';

@@ -308,3 +308,14 @@ export {
   type ResultPatternInfo,
   type ResultPatternAnalysis,
 } from './aspnet/result-pattern-detector.js';
+
+// ASP.NET Semantic Detectors
+export {
+  ExceptionPatternsSemanticDetector,
+  createExceptionPatternsSemanticDetector,
+} from './aspnet/exception-patterns-semantic.js';
+
+export {
+  ResultPatternSemanticDetector,
+  createResultPatternSemanticDetector,
+} from './aspnet/result-pattern-semantic.js';

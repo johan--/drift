@@ -266,3 +266,9 @@ export {
   type ILoggerPatternInfo,
   type ILoggerAnalysis,
 } from './aspnet/ilogger-patterns-detector.js';
+
+// ASP.NET Semantic Detectors
+export {
+  ILoggerPatternsSemanticDetector,
+  createILoggerPatternsSemanticDetector,
+} from './aspnet/ilogger-patterns-semantic.js';

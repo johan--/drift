@@ -203,3 +203,9 @@ export {
   PackageBoundariesSemanticDetector,
   createPackageBoundariesSemanticDetector,
 } from './package-boundaries-semantic.js';
+
+// ============================================================================
+// ASP.NET Core Structural Detectors (C#)
+// ============================================================================
+
+export * from './aspnet/index.js';

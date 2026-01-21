@@ -255,6 +255,10 @@ import {
   createDTOPatternsSemanticDetector,
   createNPlusOneSemanticDetector,
   createConnectionPoolingSemanticDetector,
+  // Data Boundary detectors
+  createORMModelSemanticDetector,
+  createQueryAccessSemanticDetector,
+  createSensitiveFieldSemanticDetector,
 } from './data-access/index.js';
 
 // Config Detectors
@@ -633,6 +637,10 @@ export {
   analyzeDTOPatterns,
   analyzeNPlusOne,
   analyzeConnectionPooling,
+  // Data Boundary detectors
+  createORMModelSemanticDetector,
+  createQueryAccessSemanticDetector,
+  createSensitiveFieldSemanticDetector,
 };
 
 // Config
@@ -826,7 +834,7 @@ export function createAllStylingDetectors() {
  * NOW USES SEMANTIC DETECTORS - language-agnostic keyword-based detection
  * that works across TypeScript, JavaScript, Python, and more
  */
-export function createAllDetectorsArray(): BaseDetector[] {
+export async function createAllDetectorsArray(): Promise<BaseDetector[]> {
   const detectors: BaseDetector[] = [];
 
   // API detectors (7) - keep original, they use universal patterns
@@ -946,6 +954,14 @@ export function createAllDetectorsArray(): BaseDetector[] {
     createConnectionPoolingSemanticDetector()
   );
 
+  // Data Boundary detectors (3) - SEMANTIC
+  // These track which code accesses which database tables/fields
+  detectors.push(
+    createORMModelSemanticDetector(),
+    createQueryAccessSemanticDetector(),
+    createSensitiveFieldSemanticDetector()
+  );
+
   // Config detectors (6) - SEMANTIC
   detectors.push(
     createEnvConfigSemanticDetector(),
@@ -994,6 +1010,191 @@ export function createAllDetectorsArray(): BaseDetector[] {
     createCachingPatternsSemanticDetector(),
     createDebounceThrottleSemanticDetector(),
     createBundleSizeSemanticDetector()
+  );
+
+  // ============================================================================
+  // ASP.NET Core / C# Detectors - SEMANTIC LEARNING
+  // ============================================================================
+
+  // ASP.NET Auth detectors - SEMANTIC
+  detectors.push(
+    new (await import('./auth/aspnet/authorize-attribute-semantic.js')).AuthorizeAttributeSemanticDetector(),
+    new (await import('./auth/aspnet/jwt-patterns-semantic.js')).JwtPatternsSemanticDetector(),
+    new (await import('./auth/aspnet/identity-patterns-semantic.js')).IdentityPatternsSemanticDetector(),
+    new (await import('./auth/aspnet/policy-handlers-semantic.js')).PolicyHandlersSemanticDetector(),
+    new (await import('./auth/aspnet/resource-authorization-semantic.js')).ResourceAuthorizationSemanticDetector()
+  );
+
+  // ASP.NET Data Access detectors - SEMANTIC
+  detectors.push(
+    new (await import('./data-access/aspnet/efcore-patterns-semantic.js')).EfCorePatternsSemanticDetector(),
+    new (await import('./data-access/aspnet/repository-pattern-semantic.js')).RepositoryPatternSemanticDetector()
+  );
+
+  // ASP.NET Error detectors - SEMANTIC
+  detectors.push(
+    new (await import('./errors/aspnet/exception-patterns-semantic.js')).ExceptionPatternsSemanticDetector(),
+    new (await import('./errors/aspnet/result-pattern-semantic.js')).ResultPatternSemanticDetector()
+  );
+
+  // ASP.NET Logging detectors - SEMANTIC
+  detectors.push(
+    new (await import('./logging/aspnet/ilogger-patterns-semantic.js')).ILoggerPatternsSemanticDetector()
+  );
+
+  // ASP.NET Security detectors - SEMANTIC
+  detectors.push(
+    new (await import('./security/aspnet/input-validation-semantic.js')).InputValidationSemanticDetector()
+  );
+
+  // ASP.NET Testing detectors - SEMANTIC
+  detectors.push(
+    new (await import('./testing/aspnet/xunit-patterns-semantic.js')).XUnitPatternsSemanticDetector()
+  );
+
+  // ASP.NET Config detectors - SEMANTIC
+  detectors.push(
+    new (await import('./config/aspnet/options-pattern-semantic.js')).OptionsPatternSemanticDetector()
+  );
+
+  // ASP.NET Types detectors - SEMANTIC
+  detectors.push(
+    new (await import('./types/aspnet/record-patterns-semantic.js')).RecordPatternsSemanticDetector()
+  );
+
+  // ASP.NET Performance detectors - SEMANTIC
+  detectors.push(
+    new (await import('./performance/aspnet/async-patterns-semantic.js')).AsyncPatternsSemanticDetector()
+  );
+
+  // ASP.NET Structural detectors - SEMANTIC
+  detectors.push(
+    new (await import('./structural/aspnet/di-registration-semantic.js')).DIRegistrationSemanticDetector()
+  );
+
+  // ASP.NET Documentation detectors - SEMANTIC
+  detectors.push(
+    new (await import('./documentation/aspnet/xml-documentation-semantic.js')).XmlDocumentationSemanticDetector()
+  );
+
+  // ============================================================================
+  // Laravel / PHP Detectors - SEMANTIC LEARNING (13 semantic + extraction)
+  // ============================================================================
+
+  // Laravel Contract detectors (extraction for BE↔FE matching)
+  detectors.push(
+    new (await import('./contracts/laravel/laravel-endpoint-detector.js')).LaravelEndpointDetector()
+  );
+
+  // Laravel Auth detectors (extraction + semantic)
+  detectors.push(
+    new (await import('./auth/laravel/auth-detector.js')).LaravelAuthDetector(),
+    new (await import('./auth/laravel/auth-semantic.js')).LaravelAuthSemanticDetector()
+  );
+
+  // Laravel Data Access detectors (extraction + semantic)
+  detectors.push(
+    new (await import('./data-access/laravel/eloquent-detector.js')).LaravelEloquentDetector(),
+    new (await import('./data-access/laravel/eloquent-semantic.js')).LaravelEloquentSemanticDetector(),
+    new (await import('./data-access/laravel/transaction-semantic.js')).LaravelTransactionSemanticDetector()
+  );
+
+  // Laravel Error detectors (extraction + semantic)
+  detectors.push(
+    new (await import('./errors/laravel/exception-detector.js')).LaravelExceptionDetector(),
+    new (await import('./errors/laravel/errors-semantic.js')).LaravelErrorsSemanticDetector()
+  );
+
+  // Laravel Logging detectors (extraction + semantic)
+  detectors.push(
+    new (await import('./logging/laravel/logging-detector.js')).LaravelLoggingDetector(),
+    new (await import('./logging/laravel/logging-semantic.js')).LaravelLoggingSemanticDetector()
+  );
+
+  // Laravel Testing detectors (extraction + semantic)
+  detectors.push(
+    new (await import('./testing/laravel/testing-detector.js')).LaravelTestingDetector(),
+    new (await import('./testing/laravel/testing-semantic.js')).LaravelTestingSemanticDetector()
+  );
+
+  // Laravel Structural detectors (extraction + semantic)
+  detectors.push(
+    new (await import('./structural/laravel/di-detector.js')).LaravelDIDetector(),
+    new (await import('./structural/laravel/structural-semantic.js')).LaravelStructuralSemanticDetector()
+  );
+
+  // Laravel Security detectors (extraction + semantic)
+  detectors.push(
+    new (await import('./security/laravel/security-detector.js')).LaravelSecurityDetector(),
+    new (await import('./security/laravel/security-semantic.js')).LaravelSecuritySemanticDetector()
+  );
+
+  // Laravel Config detectors (extraction + semantic)
+  detectors.push(
+    new (await import('./config/laravel/config-detector.js')).LaravelConfigDetector(),
+    new (await import('./config/laravel/config-semantic.js')).LaravelConfigSemanticDetector()
+  );
+
+  // Laravel Performance detectors (extraction + semantic)
+  detectors.push(
+    new (await import('./performance/laravel/performance-detector.js')).LaravelPerformanceDetector(),
+    new (await import('./performance/laravel/performance-semantic.js')).LaravelPerformanceSemanticDetector()
+  );
+
+  // Laravel API detectors - SEMANTIC
+  detectors.push(
+    new (await import('./api/laravel/api-semantic.js')).LaravelAPISemanticDetector()
+  );
+
+  // Laravel Async detectors (Jobs, Events, Queues) - SEMANTIC
+  detectors.push(
+    new (await import('./async/laravel/async-semantic.js')).LaravelAsyncSemanticDetector()
+  );
+
+  // Laravel Validation detectors - SEMANTIC
+  detectors.push(
+    new (await import('./validation/laravel/validation-semantic.js')).LaravelValidationSemanticDetector()
+  );
+
+  // ============================================================================
+  // Spring Boot / Java Detectors - SEMANTIC LEARNING
+  // ============================================================================
+
+  // Spring semantic detectors (12)
+  detectors.push(
+    new (await import('./spring/structural-semantic.js')).SpringStructuralSemanticDetector(),
+    new (await import('./spring/api-semantic.js')).SpringAPISemanticDetector(),
+    new (await import('./spring/auth-semantic.js')).SpringAuthSemanticDetector(),
+    new (await import('./spring/data-semantic.js')).SpringDataSemanticDetector(),
+    new (await import('./spring/di-semantic.js')).SpringDISemanticDetector(),
+    new (await import('./spring/config-semantic.js')).SpringConfigSemanticDetector(),
+    new (await import('./spring/validation-semantic.js')).SpringValidationSemanticDetector(),
+    new (await import('./spring/errors-semantic.js')).SpringErrorsSemanticDetector(),
+    new (await import('./spring/logging-semantic.js')).SpringLoggingSemanticDetector(),
+    new (await import('./spring/testing-semantic.js')).SpringTestingSemanticDetector(),
+    new (await import('./spring/transaction-semantic.js')).SpringTransactionSemanticDetector(),
+    new (await import('./spring/async-semantic.js')).SpringAsyncSemanticDetector()
+  );
+
+  // Spring Contract detectors
+  detectors.push(
+    new (await import('./contracts/spring/spring-endpoint-detector.js')).SpringEndpointDetector()
+  );
+
+  // Spring learning detectors (12)
+  detectors.push(
+    new (await import('./spring/structural-learning.js')).SpringStructuralLearningDetector(),
+    new (await import('./spring/api-learning.js')).SpringAPILearningDetector(),
+    new (await import('./spring/auth-learning.js')).SpringAuthLearningDetector(),
+    new (await import('./spring/data-learning.js')).SpringDataLearningDetector(),
+    new (await import('./spring/di-learning.js')).SpringDILearningDetector(),
+    new (await import('./spring/config-learning.js')).SpringConfigLearningDetector(),
+    new (await import('./spring/validation-learning.js')).SpringValidationLearningDetector(),
+    new (await import('./spring/errors-learning.js')).SpringErrorsLearningDetector(),
+    new (await import('./spring/logging-learning.js')).SpringLoggingLearningDetector(),
+    new (await import('./spring/testing-learning.js')).SpringTestingLearningDetector(),
+    new (await import('./spring/transaction-learning.js')).SpringTransactionLearningDetector(),
+    new (await import('./spring/async-learning.js')).SpringAsyncLearningDetector()
   );
 
   return detectors;
@@ -1395,6 +1596,18 @@ export function createAllDataAccessSemanticDetectors() {
     createDTOPatternsSemanticDetector(),
     createNPlusOneSemanticDetector(),
     createConnectionPoolingSemanticDetector(),
+  ];
+}
+
+/**
+ * Create all data boundary semantic detectors
+ * These track which code accesses which database tables/fields
+ */
+export function createAllDataBoundarySemanticDetectors() {
+  return [
+    createORMModelSemanticDetector(),
+    createQueryAccessSemanticDetector(),
+    createSensitiveFieldSemanticDetector(),
   ];
 }
 

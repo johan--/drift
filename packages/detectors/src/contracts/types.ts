@@ -16,6 +16,7 @@ export interface ExtractedEndpoint {
   responseFields: ContractField[];
   requestFields?: ContractField[];
   responseTypeName?: string;
+  requestTypeName?: string;
   framework: string;
 }
 

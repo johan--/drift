@@ -10,3 +10,8 @@ export {
   type InputValidationPatternInfo,
   type InputValidationAnalysis,
 } from './input-validation-detector.js';
+
+export {
+  InputValidationSemanticDetector,
+  createInputValidationSemanticDetector,
+} from './input-validation-semantic.js';

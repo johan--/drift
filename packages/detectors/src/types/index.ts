@@ -403,3 +403,9 @@ export {
   AnyUsageSemanticDetector,
   createAnyUsageSemanticDetector,
 } from './any-usage-semantic.js';
+
+// ============================================================================
+// C# Type System Detectors
+// ============================================================================
+
+export * from './aspnet/index.js';

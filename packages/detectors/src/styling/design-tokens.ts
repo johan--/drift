@@ -453,7 +453,8 @@ export function detectHardcodedColors(
       // e.g., colorMap = { primary: { stroke: '#B08968' } }
       // e.g., primary: '#B08968' or colors: { brand: '#123456' }
       // e.g., const colors = { red: '#ff0000' }
-      if (/(?:colors?|palette|theme|colorMap|chartColors?|statusColors?)\s*[=:{]/.test(lineContent) || 
+      // Note: Use word boundary \b to avoid matching CSS property 'color:'
+      if (/\b(?:colors|palette|theme|colorMap|chartColors?|statusColors?)\s*[=:{]/.test(lineContent) || 
           /['"]?(?:primary|secondary|accent|brand|background|foreground|text|border|success|warning|error|info|destructive|muted|stroke|fill)['"]?\s*:/.test(lineContent) ||
           /(?:const|let|var)\s+\w*[Cc]olors?\s*=/.test(lineContent)) {
         continue;

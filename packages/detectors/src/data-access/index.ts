@@ -331,3 +331,52 @@ export {
   type RepositoryPatternInfo as AspNetRepositoryPatternInfo,
   type RepositoryAnalysis as AspNetRepositoryAnalysis,
 } from './aspnet/repository-pattern-detector.js';
+
+// ============================================================================
+// ASP.NET Core Semantic Detectors (Language-Agnostic Learning)
+// ============================================================================
+
+export {
+  EfCorePatternsSemanticDetector,
+  createEfCorePatternsSemanticDetector,
+} from './aspnet/efcore-patterns-semantic.js';
+
+export {
+  RepositoryPatternSemanticDetector as AspNetRepositoryPatternSemanticDetector,
+  createRepositoryPatternSemanticDetector as createAspNetRepositoryPatternSemanticDetector,
+} from './aspnet/repository-pattern-semantic.js';
+
+// ============================================================================
+// Data Boundaries Detectors (Semantic Learning)
+// ============================================================================
+
+export {
+  ORMModelSemanticDetector,
+  createORMModelSemanticDetector,
+} from './boundaries/orm-model-detector.js';
+
+export {
+  QueryAccessSemanticDetector,
+  createQueryAccessSemanticDetector,
+} from './boundaries/query-access-detector.js';
+
+export {
+  SensitiveFieldSemanticDetector,
+  createSensitiveFieldSemanticDetector,
+} from './boundaries/sensitive-field-detector.js';
+
+// Import factory functions for createAllDataBoundarySemanticDetectors
+import { createORMModelSemanticDetector } from './boundaries/orm-model-detector.js';
+import { createQueryAccessSemanticDetector } from './boundaries/query-access-detector.js';
+import { createSensitiveFieldSemanticDetector } from './boundaries/sensitive-field-detector.js';
+
+/**
+ * Create all data boundary semantic detectors
+ */
+export function createAllDataBoundarySemanticDetectors() {
+  return [
+    createORMModelSemanticDetector(),
+    createQueryAccessSemanticDetector(),
+    createSensitiveFieldSemanticDetector(),
+  ];
+}

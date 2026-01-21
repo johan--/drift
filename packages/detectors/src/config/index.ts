@@ -205,3 +205,9 @@ export {
   EnvironmentDetectionSemanticDetector,
   createEnvironmentDetectionSemanticDetector,
 } from './environment-detection-semantic.js';
+
+// ============================================================================
+// ASP.NET Core Detectors (C#)
+// ============================================================================
+
+export * from './aspnet/index.js';

@@ -17,3 +17,45 @@ export * from './django/index.js';
 
 // ASP.NET Core support
 export * from './aspnet/index.js';
+
+// Spring MVC support
+export * from './spring/index.js';
+
+// Laravel support
+export {
+  LaravelEndpointDetector,
+  createLaravelEndpointDetector,
+  RouteExtractor,
+  createRouteExtractor,
+  ControllerExtractor,
+  createControllerExtractor,
+  ResourceExtractor,
+  createResourceExtractor,
+  FormRequestExtractor,
+  createFormRequestExtractor,
+  // Types - renamed to avoid conflict with Django
+  toContractFields as laravelToContractFields,
+  validationRulesToContractFields,
+  inferTypeFromRules,
+  RESOURCE_ACTIONS,
+  API_RESOURCE_ACTIONS,
+} from './laravel/index.js';
+
+// Re-export Laravel types
+export type {
+  LaravelRouteInfo,
+  LaravelRouteGroup,
+  LaravelControllerInfo,
+  LaravelResourceInfo,
+  LaravelFormRequestInfo,
+  LaravelExtractionResult,
+  LaravelHttpMethod,
+  RouteParameter,
+  ControllerAction,
+  ControllerMiddleware,
+  ActionParameter,
+  ModelBinding,
+  ResourceField,
+  ConditionalField,
+  ValidationRule,
+} from './laravel/index.js';

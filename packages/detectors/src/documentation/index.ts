@@ -104,3 +104,9 @@ export {
   ExampleCodeSemanticDetector,
   createExampleCodeSemanticDetector,
 } from './example-code-semantic.js';
+
+// ============================================================================
+// C# Documentation Detectors
+// ============================================================================
+
+export * from './aspnet/index.js';

@@ -10,3 +10,8 @@ export {
   type XUnitPatternInfo,
   type XUnitAnalysis,
 } from './xunit-patterns-detector.js';
+
+export {
+  XUnitPatternsSemanticDetector,
+  createXUnitPatternsSemanticDetector,
+} from './xunit-patterns-semantic.js';

@@ -299,3 +299,9 @@ export {
   BundleSizeSemanticDetector,
   createBundleSizeSemanticDetector,
 } from './bundle-size-semantic.js';
+
+// ============================================================================
+// C# Performance Detectors
+// ============================================================================
+
+export * from './aspnet/index.js';

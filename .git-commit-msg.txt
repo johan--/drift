@@ -1,0 +1,55 @@
+feat: Multi-Language Support - C#, PHP/Laravel, Java/Spring Boot
+
+This release adds comprehensive pattern detection for 3 new language ecosystems,
+bringing Drift from TypeScript/JavaScript-only to true polyglot support.
+
+## 🚀 New Language Support
+
+### C# / ASP.NET Core
+- **Auth**: [Authorize] attributes, JWT patterns, Identity, resource-based authorization
+- **Data Access**: Entity Framework Core, repository patterns, DbContext
+- **Security**: Input validation, SQL injection prevention
+- **Errors**: Exception patterns, Result<T> pattern
+- **Logging**: ILogger patterns, structured logging
+- **Testing**: xUnit patterns, test fixtures
+
+### PHP / Laravel
+- **Auth**: Policies, Gates, middleware, Sanctum/Passport
+- **Data Access**: Eloquent ORM, relationships, query scopes
+- **Security**: Form Requests, CSRF, mass assignment protection
+- **API**: Resource controllers, API resources
+- **Errors**: Exception handlers, custom exceptions
+- **Logging**: Laravel logging channels
+
+### Java / Spring Boot
+- **Auth**: Spring Security, @PreAuthorize, SecurityConfig
+- **Data Access**: Spring Data JPA, repositories, @Transactional
+- **Security**: Bean Validation (@NotBlank, @Email, @Size)
+- **API**: @RestController, @RequestMapping patterns
+- **Errors**: @ControllerAdvice, exception handlers
+
+## 🆕 New Features
+
+### Data Boundaries System
+- Track which code accesses which database tables
+- Detect sensitive field access patterns
+- Boundary violation detection
+- New CLI command: `drift boundaries`
+
+### Demo Repositories
+- `demo/csharp-backend` - ASP.NET Core Web API example
+- `demo/laravel-backend` - Laravel API example  
+- `demo/spring-backend` - Spring Boot example
+- All demos include patterns for testing scanner accuracy
+
+## 🐛 Bug Fixes
+- Fixed symlink resolution on macOS (/var -> /private/var)
+- Fixed design-tokens regex matching CSS `color:` property
+- Fixed history-store tests to match actual implementation
+- Fixed Laravel security detector constructor
+
+## 📊 Stats
+- 327 files changed
+- 3 new language ecosystems
+- 50+ new semantic detectors
+- 5 demo repositories for validation

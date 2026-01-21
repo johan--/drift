@@ -4,6 +4,10 @@
  * C#-specific error handling pattern detectors.
  */
 
+// ============================================================================
+// Regex-Based Detectors (Legacy)
+// ============================================================================
+
 export {
   ExceptionPatternsDetector,
   createExceptionPatternsDetector,
@@ -17,3 +21,17 @@ export {
   type ResultPatternInfo,
   type ResultPatternAnalysis,
 } from './result-pattern-detector.js';
+
+// ============================================================================
+// Semantic Detectors (Learning-Based)
+// ============================================================================
+
+export {
+  ExceptionPatternsSemanticDetector,
+  createExceptionPatternsSemanticDetector,
+} from './exception-patterns-semantic.js';
+
+export {
+  ResultPatternSemanticDetector,
+  createResultPatternSemanticDetector,
+} from './result-pattern-semantic.js';

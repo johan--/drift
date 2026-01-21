@@ -147,29 +147,38 @@ const DEFAULT_SEMANTIC_CONFIG: SemanticDetectorConfig = {
  * These work across languages because they look for universal patterns
  */
 const CONTEXT_PATTERNS: Array<{ type: ContextType; pattern: RegExp }> = [
-  // Decorators: @something, @Something()
+  // Decorators: @something, @Something() (Python/Java/etc)
   { type: 'decorator', pattern: /^\s*@\w*{KEYWORD}\w*\s*(\(|$)/i },
+  
+  // PHP 8 Attributes: #[Something], #[Something()]
+  { type: 'decorator', pattern: /^\s*#\[\w*{KEYWORD}\w*\s*(\(|])/i },
   
   // Function definition: def/function/func followed by keyword
   { type: 'function_definition', pattern: /(?:def|function|func|fn)\s+\w*{KEYWORD}\w*\s*\(/i },
   
-  // Class definition: class Keyword
-  { type: 'class_definition', pattern: /(?:class|struct|interface|type)\s+\w*{KEYWORD}\w*/i },
+  // PHP method definition: public/protected/private function
+  { type: 'function_definition', pattern: /(?:public|protected|private)\s+(?:static\s+)?function\s+\w*{KEYWORD}\w*\s*\(/i },
   
-  // Import statements
+  // Class definition: class Keyword
+  { type: 'class_definition', pattern: /(?:class|struct|interface|type|trait|enum)\s+\w*{KEYWORD}\w*/i },
+  
+  // Import statements (including PHP use)
   { type: 'import', pattern: /(?:import|from|require|use)\s+.*{KEYWORD}/i },
   
-  // Property access: .keyword or ['keyword']
-  { type: 'property_access', pattern: /\.\s*{KEYWORD}\b|\[\s*['"`]{KEYWORD}['"`]\s*\]/i },
+  // Property access: .keyword or ['keyword'] or ->keyword (PHP)
+  { type: 'property_access', pattern: /(?:\.|->)\s*{KEYWORD}\b|\[\s*['"`]{KEYWORD}['"`]\s*\]/i },
   
-  // Function call: keyword( or keyword.something(
+  // Function call: keyword( or keyword.something( or keyword->something( (PHP)
   { type: 'function_call', pattern: /\b{KEYWORD}\w*\s*\(/i },
+  
+  // Static method call: Class::keyword() (PHP)
+  { type: 'function_call', pattern: /\w+::{KEYWORD}\w*\s*\(/i },
   
   // Conditional: if/elif/else if/when/case followed by keyword
   { type: 'conditional', pattern: /(?:if|elif|else\s+if|when|case|switch).*{KEYWORD}/i },
   
-  // Assignment: keyword = or keyword :=
-  { type: 'assignment', pattern: /\b{KEYWORD}\w*\s*[:=]/i },
+  // Assignment: keyword = or keyword := or $keyword = (PHP)
+  { type: 'assignment', pattern: /(?:\$?\b{KEYWORD}\w*)\s*[:=]/i },
   
   // Type annotation: : Keyword or -> Keyword
   { type: 'type_annotation', pattern: /[:\-]>\s*\w*{KEYWORD}\w*/i },
@@ -200,7 +209,7 @@ export abstract class SemanticDetector extends BaseDetector {
   
   /** All languages supported - semantic detection is language agnostic */
   readonly supportedLanguages: Language[] = [
-    'typescript', 'javascript', 'python', 'csharp', 'css', 'scss', 'json', 'yaml', 'markdown'
+    'typescript', 'javascript', 'python', 'csharp', 'php', 'css', 'scss', 'json', 'yaml', 'markdown'
   ];
 
   constructor(config: Partial<SemanticDetectorConfig> = {}) {
