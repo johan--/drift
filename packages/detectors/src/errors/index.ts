@@ -319,3 +319,9 @@ export {
   ResultPatternSemanticDetector,
   createResultPatternSemanticDetector,
 } from './aspnet/result-pattern-semantic.js';
+
+// ============================================================================
+// C++ Error Handling Detectors
+// ============================================================================
+
+export * from './cpp/index.js';
