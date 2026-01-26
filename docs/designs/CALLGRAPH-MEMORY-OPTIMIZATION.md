@@ -24,86 +24,163 @@ Use the existing `CallGraphShardStore` in `packages/core/src/lake/callgraph-shar
     └── ...
 ```
 
-### Key Changes Required
+## Full Migration Scope
 
-#### 1. Update `CallGraphAnalyzer.scan()` to stream results
+### Phase 1: Core Infrastructure (DONE ✅)
+
+1. ✅ `StreamingCallGraphBuilder` - Writes shards incrementally during build
+2. ✅ `CallGraphShardStore` - Already exists, stores per-file shards
+3. ✅ CLI `callgraph build` - Updated to use streaming builder
+
+### Phase 2: Unified Call Graph Provider (DONE ✅)
+
+Created a unified provider that abstracts the storage format and provides lazy loading:
+
+**File: `packages/core/src/call-graph/unified-provider.ts`**
 
 ```typescript
-// Instead of accumulating all functions:
-const functions = new Map<string, FunctionNode>();
-
-// Stream to shard store as we scan each file:
-for (const file of files) {
-  const fileFunctions = await this.scanFile(file);
-  await shardStore.saveShard(file, fileFunctions);
+/**
+ * UnifiedCallGraphProvider
+ * 
+ * Provides a unified interface for call graph queries regardless of storage format.
+ * Supports both legacy single-file and new sharded storage.
+ * Implements lazy loading for memory efficiency.
+ */
+export class UnifiedCallGraphProvider {
+  // Auto-detect storage format
+  async initialize(): Promise<void>;
+  
+  // Core queries (lazy-loaded)
+  getFunction(id: string): Promise<UnifiedFunction | null>;
+  getFunctionsInFile(file: string): Promise<UnifiedFunction[]>;
+  getFunctionAtLine(file: string, line: number): Promise<UnifiedFunction | null>;
+  
+  // Entry points and data accessors (from index)
+  getEntryPoints(): Promise<string[]>;
+  getDataAccessors(): Promise<string[]>;
+  
+  // Stats (from index, no full load needed)
+  getStats(): Promise<CallGraphStats>;
+  getProviderStats(): ProviderStats;
+  
+  // Reachability (lazy traversal with LRU cache)
+  getReachableData(file: string, line: number, options?: ReachabilityOptions): Promise<ReachabilityResult>;
+  getCodePathsToData(options: InverseReachabilityOptions): Promise<InverseReachabilityResult>;
 }
 ```
 
-#### 2. Update CLI `callgraph build` command
+Key features:
+- Auto-detects storage format (legacy `graph.json` vs sharded `lake/callgraph/`)
+- LRU cache for shards (default 100 shards)
+- Unified `UnifiedFunction` type that works with both formats
+- Built-in reachability queries with lazy traversal
+- Exported from `packages/core/src/call-graph/index.ts` and `packages/core/src/index.ts`
+
+### Phase 3: Update All Consumers (IN PROGRESS)
+
+#### 3.1 Core Package (`packages/core`) - DONE ✅
+
+| File | Status | Change |
+|------|--------|--------|
+| `call-graph/index.ts` | ✅ | Export `UnifiedCallGraphProvider` |
+| `index.ts` | ✅ | Export provider types |
+
+#### 3.2 CLI Package (`packages/cli`) - PENDING
+
+| File | Status | Change |
+|------|--------|--------|
+| `commands/callgraph.ts` | ✅ | Build uses streaming |
+| `commands/callgraph.ts` | ⏳ | status/reach/inverse need provider |
+| `commands/test-topology.ts` | ⏳ | Use provider instead of analyzer |
+| `commands/error-handling.ts` | ⏳ | Use provider instead of analyzer |
+| `commands/coupling.ts` | ⏳ | Use provider instead of analyzer |
+| `commands/simulate.ts` | ⏳ | Use provider instead of analyzer |
+
+#### 3.3 MCP Package (`packages/mcp`) - PARTIAL
+
+| File | Status | Change |
+|------|--------|--------|
+| `infrastructure/startup-warmer.ts` | ✅ | Updated to use provider |
+| `enterprise-server.ts` | ⏳ | Replace `CallGraphStore` with provider |
+| `tools/detail/reachability.ts` | ⏳ | Use provider |
+| `tools/detail/impact-analysis.ts` | ⏳ | Use provider |
+| `tools/generation/explain.ts` | ⏳ | Use provider |
+| `tools/generation/suggest-changes.ts` | ⏳ | Use provider |
+| `tools/surgical/test-template.ts` | ⏳ | Use provider |
+| `tools/surgical/callers.ts` | ⏳ | Use provider |
+| `tools/orchestration/context.ts` | ⏳ | Use provider |
+| `tools/analysis/coupling.ts` | ⏳ | Use provider |
+| `tools/analysis/error-handling.ts` | ⏳ | Use provider |
+| `tools/analysis/test-topology.ts` | ⏳ | Use provider |
+
+### Phase 4: Lazy Reachability Engine (DONE ✅)
+
+The `UnifiedCallGraphProvider` includes built-in lazy reachability:
 
 ```typescript
-// Use CallGraphShardStore instead of direct JSON.stringify
-import { CallGraphShardStore } from 'driftdetect-core';
-
-const shardStore = new CallGraphShardStore({ rootDir });
-await shardStore.initialize();
-
-// Scan incrementally
-for (const file of files) {
-  const shard = await analyzer.scanFile(file);
-  await shardStore.saveShard(shard);
-}
-
-// Build index at the end
-await shardStore.buildIndex();
-```
-
-#### 3. Update `CallGraphStore` to use shards
-
-The existing `CallGraphStore` should delegate to `CallGraphShardStore` for large graphs:
-
-```typescript
-async save(graph: CallGraph): Promise<void> {
-  if (graph.functions.size > SHARD_THRESHOLD) {
-    // Use sharded storage
-    await this.saveSharded(graph);
-  } else {
-    // Use single file for small graphs
-    await this.saveSingleFile(graph);
+// Built into UnifiedCallGraphProvider
+async getReachableData(file: string, line: number, options?: ReachabilityOptions): Promise<ReachabilityResult> {
+  // 1. Find function at location (single shard load)
+  const func = await this.getFunctionAtLine(file, line);
+  
+  // 2. BFS traversal, loading shards on-demand with LRU cache
+  const visited = new Set<string>();
+  const queue = [{ id: func.id, depth: 0, path: [...] }];
+  
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (visited.has(current.id) || current.depth > maxDepth) continue;
+    visited.add(current.id);
+    
+    // Load function (may load shard, uses LRU cache)
+    const fn = await this.getFunction(current.id);
+    if (!fn) continue;
+    
+    // Collect data access
+    for (const access of fn.dataAccess) {
+      reachableAccess.push({ access, path: current.path, depth: current.depth });
+    }
+    
+    // Queue callees
+    for (const calleeId of fn.calleeIds) {
+      if (!visited.has(calleeId)) {
+        queue.push({ id: calleeId, depth: current.depth + 1, path: [...] });
+      }
+    }
   }
+  
+  return { reachableAccess, tables, sensitiveFields, ... };
 }
 ```
 
-#### 4. Lazy loading for queries
+### Phase 5: Backward Compatibility
 
-```typescript
-// Don't load entire graph into memory
-getFunction(id: string): Promise<FunctionNode | undefined> {
-  const fileHash = this.getFileHashFromId(id);
-  const shard = await this.loadShard(fileHash);
-  return shard.functions.find(f => f.id === id);
-}
-```
+1. **Auto-detect format**: Check for `graph.json` (legacy) vs `index.json` (sharded)
+2. **Migration command**: `drift callgraph migrate` to convert legacy to sharded
+3. **Deprecation warnings**: Log warnings when using legacy format
 
-## Implementation Steps
+## Implementation Order
 
-1. [ ] Add `scanFile()` method to `CallGraphAnalyzer` for per-file scanning
-2. [ ] Update `CallGraphShardStore` to support incremental saves
-3. [ ] Update CLI `callgraph build` to use streaming approach
-4. [ ] Update `CallGraphStore` to use shards for large graphs
-5. [ ] Update MCP tools to use lazy loading from shards
-6. [ ] Add tests for large codebase scenarios
+1. ✅ **Create `StreamingCallGraphBuilder`** - Writes shards incrementally
+2. ✅ **Create `UnifiedCallGraphProvider`** - Core abstraction with lazy loading
+3. ✅ **Update startup warmer** - Uses provider for call graph
+4. ⏳ **Update CLI commands** - One by one
+5. ⏳ **Update MCP tools** - One by one
+6. ⏳ **Add migration command** - For existing users
+7. ⏳ **Update tests** - Mock provider instead of store
 
 ## Memory Budget
 
-Target: Build call graph for 10,000+ file codebase with < 512MB memory
+Target: Query call graph for 10,000+ file codebase with < 256MB memory
 
-- Per-file shard: ~10-50KB (depending on function count)
-- Index file: ~1MB for 10,000 files
-- In-memory during build: Only current file + index
+- Index file: ~1MB (always loaded)
+- Per-shard: ~10-50KB (loaded on demand)
+- LRU cache: 100 shards max (~5MB)
+- Reachability traversal: Only visited functions in memory
 
-## Backward Compatibility
+## Testing Strategy
 
-- Keep supporting single `graph.json` for small codebases
-- Auto-detect format on load (sharded vs single file)
-- Migration path: Re-run `drift callgraph build` to convert
+1. **Unit tests**: Mock provider for all consumers
+2. **Integration tests**: Build and query on demo projects
+3. **Memory tests**: Profile memory usage on large codebases
+4. **Backward compat tests**: Ensure legacy format still works

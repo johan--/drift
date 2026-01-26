@@ -1,25 +1,38 @@
-## Getting Started
+## 🚀 Getting Started
 - [Home](Home)
 - [Getting Started](Getting-Started)
 - [MCP Setup](MCP-Setup)
+- [Configuration](Configuration)
 
-## CI/CD Integration
+## 🤖 MCP Server
+- [MCP Tools Reference](MCP-Tools-Reference)
+- [MCP Architecture](MCP-Architecture)
+
+## 📖 Reference
+- [CLI Reference](CLI-Reference)
+- [Pattern Categories](Pattern-Categories)
+- [Language Support](Language-Support)
+
+## 🔬 Deep Dives
+- [Architecture](Architecture)
+- [Call Graph Analysis](Call-Graph-Analysis)
+- [Security Analysis](Security-Analysis)
+- [Test Topology](Test-Topology)
+- [Coupling Analysis](Coupling-Analysis)
+
+## 🔧 CI/CD Integration
 - [Quality Gates](Quality-Gates)
 - [CI Integration](CI-Integration)
 - [Git Hooks](Git-Hooks)
 - [Incremental Scans](Incremental-Scans)
 
-## Reference
-- [CLI Reference](CLI-Reference)
-- [MCP Tools Reference](MCP-Tools-Reference)
-- [Pattern Categories](Pattern-Categories)
-
-## Guides
-- [Language Support](Language-Support)
-- [Configuration](Configuration)
+## 💬 Community
+- [Contributing](Contributing)
+- [FAQ](FAQ)
 - [Troubleshooting](Troubleshooting)
 
-## Links
+## 🔗 Links
 - [GitHub](https://github.com/dadbodgeoff/drift)
 - [npm](https://www.npmjs.com/package/driftdetect)
 - [Issues](https://github.com/dadbodgeoff/drift/issues)
+- [Discussions](https://github.com/dadbodgeoff/drift/discussions)
