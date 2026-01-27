@@ -1,25 +1,102 @@
 # MCP Tools Reference
 
-Complete reference for all 24 Drift MCP tools.
+Drift provides **45+ MCP tools** organized in a **7-layer architecture** designed for efficient AI agent interaction. This architecture minimizes token usage while maximizing capability — a model for how MCP servers should be built.
 
-## Tool Layers
+## Architecture Philosophy
 
-Drift organizes tools in layers for efficient token usage:
+Drift's MCP architecture follows key principles that make it the gold standard for AI tool design:
 
-1. **Orchestration** — Start here for most tasks
-2. **Discovery** — Quick overview of codebase
-3. **Exploration** — Browse patterns and security
-4. **Detail** — Deep dives into specific patterns
-5. **Analysis** — Code health metrics
-6. **Generation** — AI-assisted changes
+### 1. Layered Tool Design
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Layer 1: ORCHESTRATION                                          │
+│  "Tell me what you want to do, I'll give you everything"         │
+│  drift_context, drift_package_context                            │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 2: DISCOVERY                                              │
+│  "Quick health check, what's available?"                         │
+│  drift_status, drift_capabilities, drift_projects                │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 3: SURGICAL                                               │
+│  "I need exactly this one thing, nothing more"                   │
+│  12 ultra-focused tools (200-500 tokens each)                    │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 4: EXPLORATION                                            │
+│  "Let me browse and filter"                                      │
+│  drift_patterns_list, drift_security_summary, etc.               │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 5: DETAIL                                                 │
+│  "Deep dive into this specific thing"                            │
+│  drift_pattern_get, drift_code_examples, etc.                    │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 6: ANALYSIS                                               │
+│  "Run complex analysis"                                          │
+│  drift_test_topology, drift_coupling, drift_error_handling       │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 7: GENERATION                                             │
+│  "Help me write/validate code"                                   │
+│  drift_suggest_changes, drift_validate_change, drift_explain     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 2. Token Budget Awareness
+
+Every tool is designed with token budgets:
+
+| Layer | Target Tokens | Max Tokens | Purpose |
+|-------|---------------|------------|---------|
+| Orchestration | 1000-2000 | 4000 | Comprehensive context |
+| Discovery | 200-500 | 1000 | Quick status |
+| Surgical | 200-500 | 800 | Precise lookups |
+| Exploration | 500-1000 | 2000 | Paginated lists |
+| Detail | 500-1500 | 3000 | Deep dives |
+| Analysis | 1000-2000 | 4000 | Complex analysis |
+| Generation | 500-1500 | 3000 | Code suggestions |
+
+### 3. Response Structure
+
+Every response follows a consistent structure:
+
+```json
+{
+  "summary": "One-line description of what was found",
+  "data": { /* The actual payload */ },
+  "pagination": {
+    "cursor": "next_page_token",
+    "hasMore": true,
+    "totalCount": 150,
+    "pageSize": 20
+  },
+  "hints": {
+    "nextActions": ["Suggested next steps"],
+    "relatedTools": ["drift_tool_1", "drift_tool_2"],
+    "warnings": ["Important warnings"]
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "durationMs": 45,
+    "cached": false,
+    "tokenEstimate": 850
+  }
+}
+```
+
+### 4. Smart Caching & Rate Limiting
+
+- **Response caching** — Repeated queries return cached results
+- **Rate limiting** — Prevents runaway tool calls
+- **Metrics collection** — Track usage patterns
 
 ---
 
 ## Layer 1: Orchestration
 
+**The recommended starting point.** These tools understand your intent and return curated context.
+
 ### `drift_context`
 
-**The recommended starting point.** Returns curated context based on your intent.
+The "final boss" tool. Instead of making the AI figure out which tools to call, this tool understands intent and returns everything needed.
 
 ```json
 {
@@ -31,63 +108,359 @@ Drift organizes tools in layers for efficient token usage:
 ```
 
 **Parameters:**
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `intent` | enum | Yes | `add_feature`, `fix_bug`, `refactor`, `security_audit`, `understand_code`, `add_test` |
-| `focus` | string | Yes | Area or feature you're working with |
+| `intent` | enum | Yes | What you're trying to do |
+| `focus` | string | Yes | The area you're working with |
 | `question` | string | No | Specific question to answer |
-| `project` | string | No | Target project name |
+| `project` | string | No | Target a specific registered project |
 
-**Returns:** Relevant patterns, examples, files to modify, warnings, and guidance.
+**Intent Options:**
+- `add_feature` — Adding new functionality
+- `fix_bug` — Fixing a bug or issue
+- `refactor` — Improving code structure
+- `security_audit` — Reviewing for security issues
+- `understand_code` — Learning how something works
+- `add_test` — Adding test coverage
+
+**Returns:**
+
+```json
+{
+  "summary": "Adding feature in 'user authentication'. Found 5 relevant patterns...",
+  "relevantPatterns": [
+    {
+      "id": "auth-jwt-pattern",
+      "name": "JWT Authentication",
+      "category": "auth",
+      "why": "Directly related to 'authentication' - this is the established pattern",
+      "example": "// Code example from your codebase",
+      "confidence": 0.92,
+      "locationCount": 12
+    }
+  ],
+  "suggestedFiles": [
+    {
+      "file": "src/auth/login.ts",
+      "reason": "Matches focus area",
+      "patterns": ["JWT Authentication", "Error Handling"],
+      "risk": "medium"
+    }
+  ],
+  "guidance": {
+    "keyInsights": [
+      "This codebase has established API patterns - follow them for consistency",
+      "Error handling patterns exist - use the established error types"
+    ],
+    "commonMistakes": [
+      "Don't create new patterns when existing ones apply",
+      "Remember to add appropriate logging"
+    ],
+    "decisionPoints": [
+      "Decide if this feature needs its own module or fits in existing structure"
+    ]
+  },
+  "warnings": [
+    {
+      "type": "data_access",
+      "message": "src/auth/login.ts accesses sensitive data: users.password_hash",
+      "severity": "warning"
+    }
+  ],
+  "confidence": {
+    "patternCoverage": 80,
+    "dataFreshness": "Current session",
+    "limitations": []
+  },
+  "deeperDive": [
+    {
+      "tool": "drift_code_examples",
+      "args": { "pattern": "auth-jwt-pattern", "maxExamples": 3 },
+      "reason": "See more examples of 'JWT Authentication' pattern"
+    }
+  ],
+  "semanticInsights": {
+    "frameworks": ["Express", "Prisma"],
+    "entryPoints": [
+      { "name": "login", "file": "src/auth/login.ts", "type": "route", "path": "/api/auth/login" }
+    ],
+    "dataAccessors": [
+      { "name": "findUser", "file": "src/repositories/user.ts", "tables": ["users"] }
+    ]
+  },
+  "constraints": [
+    {
+      "id": "auth-required",
+      "name": "Authentication Required",
+      "enforcement": "error",
+      "guidance": "All /api/* routes must use @RequireAuth middleware"
+    }
+  ]
+}
+```
+
+### `drift_package_context`
+
+Get context for a specific package or module.
+
+```json
+{
+  "package": "src/auth",
+  "depth": "detailed"
+}
+```
 
 ---
 
 ## Layer 2: Discovery
 
+Quick, lightweight tools for health checks and capability discovery.
+
 ### `drift_status`
 
-Get codebase health snapshot. Always fast, always lightweight.
+Codebase health snapshot. Always fast, always lightweight.
 
 ```json
 {}
 ```
 
-No parameters required.
-
-**Returns:** Pattern counts, health score, critical issues.
-
-### `drift_capabilities`
-
-List all Drift capabilities.
-
-```json
-{}
-```
-
-**Returns:** Guide to available tools organized by purpose.
-
-### `drift_projects`
-
-Manage registered projects.
+**Returns:**
 
 ```json
 {
-  "action": "list",
-  "project": "backend",
-  "path": "/path/to/project"
+  "summary": "47 patterns (12 approved), health score 72/100",
+  "data": {
+    "patterns": {
+      "total": 47,
+      "approved": 12,
+      "discovered": 32,
+      "ignored": 3
+    },
+    "categories": {
+      "api": 12,
+      "auth": 8,
+      "errors": 15,
+      "data-access": 12
+    },
+    "healthScore": 72,
+    "criticalIssues": []
+  }
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `action` | enum | No | `list`, `info`, `switch`, `recent`, `register` |
-| `project` | string | No | Project name (for info/switch) |
-| `path` | string | No | Project path (for register) |
+### `drift_capabilities`
+
+List all Drift capabilities and when to use each tool.
+
+```json
+{}
+```
+
+**Returns:** Organized guide to all available tools.
+
+### `drift_projects`
+
+Manage registered projects for multi-project workflows.
+
+```json
+{
+  "action": "list"
+}
+```
+
+**Actions:** `list`, `info`, `switch`, `recent`, `register`
 
 ---
 
-## Layer 3: Exploration
+## Layer 3: Surgical Tools
+
+**12 ultra-focused tools** designed for minimal token usage. Each tool does exactly one thing.
+
+### `drift_signature`
+
+Get function signature without reading entire files.
+
+```json
+{
+  "symbol": "handleLogin",
+  "file": "src/auth/login.ts",
+  "includeDocs": true
+}
+```
+
+**Returns:**
+
+```json
+{
+  "summary": "Found function 'handleLogin' in src/auth/login.ts:45",
+  "data": {
+    "found": true,
+    "signatures": [{
+      "file": "src/auth/login.ts",
+      "line": 45,
+      "kind": "function",
+      "signature": "export async function handleLogin(email: string, password: string): Promise<User>",
+      "parameters": [
+        { "name": "email", "type": "string", "required": true },
+        { "name": "password", "type": "string", "required": true }
+      ],
+      "returnType": "Promise<User>",
+      "exported": true
+    }]
+  }
+}
+```
+
+### `drift_callers`
+
+Lightweight "who calls this function" lookup.
+
+```json
+{
+  "function": "validateToken",
+  "transitive": true,
+  "maxDepth": 2
+}
+```
+
+**Returns:**
+
+```json
+{
+  "summary": "'validateToken' has 5 direct callers (public API)",
+  "data": {
+    "target": { "function": "validateToken", "file": "src/auth/token.ts", "line": 23 },
+    "directCallers": [
+      { "function": "requireAuth", "file": "src/middleware/auth.ts", "line": 12, "callSite": 34 }
+    ],
+    "transitiveCallers": [
+      { "function": "handleRequest", "file": "src/api/handler.ts", "depth": 2, "path": ["validateToken", "requireAuth"] }
+    ],
+    "stats": {
+      "directCount": 5,
+      "transitiveCount": 12,
+      "isPublicApi": true,
+      "isWidelyUsed": true
+    }
+  }
+}
+```
+
+### `drift_imports`
+
+Resolve correct import statements.
+
+```json
+{
+  "symbol": "User",
+  "fromFile": "src/api/users.ts"
+}
+```
+
+### `drift_prevalidate`
+
+Quick validation before making changes.
+
+```json
+{
+  "file": "src/api/users.ts",
+  "change": "adding new endpoint"
+}
+```
+
+### `drift_similar`
+
+Find semantically similar code.
+
+```json
+{
+  "pattern": "error handling",
+  "file": "src/api/users.ts"
+}
+```
+
+### `drift_type`
+
+Expand type definitions.
+
+```json
+{
+  "name": "User",
+  "file": "src/types/user.ts"
+}
+```
+
+### `drift_recent`
+
+Show recent changes in an area.
+
+```json
+{
+  "days": 7,
+  "category": "api"
+}
+```
+
+### `drift_test_template`
+
+Generate test scaffolding.
+
+```json
+{
+  "function": "handleLogin",
+  "file": "src/auth/login.ts"
+}
+```
+
+### `drift_dependencies`
+
+Package dependencies lookup (multi-language).
+
+```json
+{
+  "target": "src/auth"
+}
+```
+
+### `drift_middleware`
+
+Middleware pattern lookup.
+
+```json
+{
+  "endpoint": "/api/users",
+  "method": "POST"
+}
+```
+
+### `drift_hooks`
+
+React/Vue hooks lookup.
+
+```json
+{
+  "component": "UserProfile",
+  "file": "src/components/UserProfile.tsx"
+}
+```
+
+### `drift_errors`
+
+Error types and handling gaps.
+
+```json
+{
+  "function": "handlePayment",
+  "file": "src/payments/handler.ts"
+}
+```
+
+---
+
+## Layer 4: Exploration
+
+Paginated listing tools for browsing and filtering.
 
 ### `drift_patterns_list`
 
@@ -99,19 +472,10 @@ List patterns with summaries.
   "status": "approved",
   "minConfidence": 0.8,
   "search": "controller",
-  "limit": 20
+  "limit": 20,
+  "cursor": "next_page_token"
 }
 ```
-
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `categories` | array | No | Filter by categories |
-| `status` | enum | No | `all`, `approved`, `discovered`, `ignored` |
-| `minConfidence` | number | No | Minimum confidence 0.0-1.0 |
-| `search` | string | No | Search pattern names |
-| `limit` | number | No | Max results (default: 20) |
-| `cursor` | string | No | Pagination cursor |
 
 ### `drift_security_summary`
 
@@ -124,11 +488,7 @@ Security posture overview.
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `focus` | enum | No | `all`, `critical`, `data-access`, `auth` |
-| `limit` | number | No | Max items per section |
+**Focus options:** `all`, `critical`, `data-access`, `auth`
 
 ### `drift_contracts_list`
 
@@ -141,16 +501,11 @@ API contracts between frontend and backend.
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `status` | enum | No | `all`, `verified`, `mismatch`, `discovered` |
-| `limit` | number | No | Max results |
-| `cursor` | string | No | Pagination cursor |
+**Status options:** `all`, `verified`, `mismatch`, `discovered`
 
 ### `drift_trends`
 
-Pattern trend analysis.
+Pattern trend analysis over time.
 
 ```json
 {
@@ -160,16 +515,22 @@ Pattern trend analysis.
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `period` | enum | No | `7d`, `30d`, `90d` |
-| `category` | string | No | Filter by category |
-| `severity` | enum | No | `all`, `critical`, `warning` |
+### `drift_env`
+
+Environment variable analysis.
+
+```json
+{
+  "action": "list",
+  "category": "secrets"
+}
+```
 
 ---
 
-## Layer 4: Detail
+## Layer 5: Detail
+
+Deep dives into specific patterns, files, and analysis.
 
 ### `drift_pattern_get`
 
@@ -184,14 +545,6 @@ Complete details for a specific pattern.
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `id` | string | Yes | Pattern ID |
-| `includeLocations` | boolean | No | Include all locations |
-| `includeOutliers` | boolean | No | Include outlier details |
-| `maxLocations` | number | No | Max locations to return |
-
 ### `drift_code_examples`
 
 Real code examples for patterns.
@@ -205,14 +558,6 @@ Real code examples for patterns.
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `categories` | array | No | Categories to get examples for |
-| `pattern` | string | No | Specific pattern name or ID |
-| `maxExamples` | number | No | Max examples per pattern |
-| `contextLines` | number | No | Lines of context |
-
 ### `drift_files_list`
 
 List files with patterns.
@@ -225,14 +570,6 @@ List files with patterns.
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `path` | string | No | Glob pattern |
-| `category` | string | No | Filter by category |
-| `limit` | number | No | Max files |
-| `cursor` | string | No | Pagination cursor |
-
 ### `drift_file_patterns`
 
 All patterns in a specific file.
@@ -243,12 +580,6 @@ All patterns in a specific file.
   "category": "api"
 }
 ```
-
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `file` | string | Yes | File path |
-| `category` | string | No | Filter by category |
 
 ### `drift_impact_analysis`
 
@@ -262,13 +593,6 @@ Analyze impact of changing a file or function.
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `target` | string | Yes | File path or function name |
-| `maxDepth` | number | No | Max call depth |
-| `limit` | number | No | Max items per section |
-
 ### `drift_reachability`
 
 Data reachability analysis.
@@ -277,24 +601,24 @@ Data reachability analysis.
 {
   "direction": "forward",
   "location": "src/api/users.ts:42",
-  "target": "users.password_hash",
   "maxDepth": 10,
   "sensitiveOnly": true
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `direction` | enum | No | `forward` (what can code access) or `inverse` (who can access data) |
-| `location` | string | No | For forward: file:line or function |
-| `target` | string | No | For inverse: table or table.field |
-| `maxDepth` | number | No | Max traversal depth |
-| `sensitiveOnly` | boolean | No | Only show sensitive data |
+**Or inverse:**
+
+```json
+{
+  "direction": "inverse",
+  "target": "users.password_hash",
+  "maxDepth": 10
+}
+```
 
 ### `drift_dna_profile`
 
-Styling DNA profile.
+Styling DNA profile for frontend consistency.
 
 ```json
 {
@@ -302,10 +626,7 @@ Styling DNA profile.
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `gene` | enum | No | `variant-handling`, `responsive-approach`, `state-styling`, `theming`, `spacing-philosophy`, `animation-approach` |
+**Gene options:** `variant-handling`, `responsive-approach`, `state-styling`, `theming`, `spacing-philosophy`, `animation-approach`
 
 ### `drift_wrappers`
 
@@ -315,23 +636,20 @@ Framework wrapper detection.
 {
   "category": "data-fetching",
   "minConfidence": 0.5,
-  "minClusterSize": 2,
-  "includeTests": false
+  "minClusterSize": 2
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `category` | enum | No | Wrapper category |
-| `minConfidence` | number | No | Minimum confidence 0-1 |
-| `minClusterSize` | number | No | Minimum wrappers per cluster |
-| `maxDepth` | number | No | Max wrapper depth |
-| `includeTests` | boolean | No | Include test files |
-
 ---
 
-## Layer 5: Analysis
+## Layer 6: Analysis
+
+Complex analysis tools. Some require pre-built data.
+
+> **Note:** Run build commands first:
+> - `drift test-topology build`
+> - `drift coupling build`
+> - `drift error-handling build`
 
 ### `drift_test_topology`
 
@@ -340,21 +658,11 @@ Test-to-code mapping analysis.
 ```json
 {
   "action": "affected",
-  "files": ["src/auth/login.ts", "src/auth/logout.ts"],
-  "file": "src/api/users.ts",
-  "limit": 20,
-  "minRisk": "medium"
+  "files": ["src/auth/login.ts", "src/auth/logout.ts"]
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `action` | enum | Yes | `status`, `coverage`, `uncovered`, `mocks`, `affected`, `quality` |
-| `file` | string | No | File for coverage/quality |
-| `files` | array | No | Changed files for affected |
-| `limit` | number | No | Max results |
-| `minRisk` | enum | No | `low`, `medium`, `high` |
+**Actions:** `status`, `coverage`, `uncovered`, `mocks`, `affected`, `quality`
 
 ### `drift_coupling`
 
@@ -363,23 +671,11 @@ Module dependency analysis.
 ```json
 {
   "action": "cycles",
-  "module": "src/auth",
-  "limit": 15,
-  "minCoupling": 3,
-  "maxCycleLength": 10,
   "minSeverity": "warning"
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `action` | enum | Yes | `status`, `cycles`, `hotspots`, `analyze`, `refactor-impact`, `unused-exports` |
-| `module` | string | No | Module path for analyze/refactor-impact |
-| `limit` | number | No | Max results |
-| `minCoupling` | number | No | Min coupling threshold |
-| `maxCycleLength` | number | No | Max cycle length |
-| `minSeverity` | enum | No | `info`, `warning`, `critical` |
+**Actions:** `status`, `cycles`, `hotspots`, `analyze`, `refactor-impact`, `unused-exports`
 
 ### `drift_error_handling`
 
@@ -388,59 +684,16 @@ Error handling pattern analysis.
 ```json
 {
   "action": "gaps",
-  "function": "handleLogin",
-  "limit": 20,
   "minSeverity": "medium"
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `action` | enum | Yes | `status`, `gaps`, `boundaries`, `unhandled`, `analyze` |
-| `function` | string | No | Function for analyze |
-| `limit` | number | No | Max results |
-| `minSeverity` | enum | No | `low`, `medium`, `high`, `critical` |
+**Actions:** `status`, `gaps`, `boundaries`, `unhandled`, `analyze`
 
 ### `drift_constants`
 
-Analyze constants, enums, and exported values. Detects hardcoded secrets, inconsistent values, and magic numbers.
+Analyze constants, enums, and exported values.
 
-```json
-{
-  "action": "status"
-}
-```
-
-**Actions:**
-
-| Action | Description |
-|--------|-------------|
-| `status` | Overview of constants by category and language |
-| `list` | List constants with filtering |
-| `get` | Get constant details |
-| `usages` | Find references to a constant |
-| `magic` | Find magic values that should be constants |
-| `dead` | Find unused constants |
-| `secrets` | Detect potential hardcoded secrets |
-| `inconsistent` | Find constants with inconsistent values |
-
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `action` | enum | No | Action to perform (default: `status`) |
-| `category` | enum | No | Filter by category: `config`, `api`, `status`, `error`, `feature_flag`, `limit`, `regex`, `path`, `env`, `security`, `uncategorized` |
-| `language` | enum | No | Filter by language: `typescript`, `javascript`, `python`, `java`, `csharp`, `php`, `go` |
-| `file` | string | No | Filter by file path |
-| `search` | string | No | Search constant names |
-| `exported` | boolean | No | Filter by exported status |
-| `id` | string | No | Constant ID for get/usages |
-| `name` | string | No | Constant name for get/usages |
-| `severity` | enum | No | Min severity for secrets: `info`, `low`, `medium`, `high`, `critical` |
-| `limit` | number | No | Max results (default: 20, max: 50) |
-| `cursor` | string | No | Pagination cursor |
-
-**Example - Find hardcoded secrets:**
 ```json
 {
   "action": "secrets",
@@ -448,83 +701,62 @@ Analyze constants, enums, and exported values. Detects hardcoded secrets, incons
 }
 ```
 
-**Example - List API constants:**
-```json
-{
-  "action": "list",
-  "category": "api",
-  "language": "typescript"
-}
-```
+**Actions:** `status`, `list`, `get`, `usages`, `magic`, `dead`, `secrets`, `inconsistent`
 
 ### `drift_quality_gate`
 
-Run quality gates on code changes. Enterprise CI/CD integration point.
+Run quality gates on code changes.
 
 ```json
 {
-  "files": ["src/routes/users.ts", "src/services/user-service.ts"],
+  "files": ["src/routes/users.ts"],
   "policy": "strict",
   "gates": "pattern-compliance,security-boundary",
-  "format": "json",
-  "verbose": true,
-  "branch": "feature/new-auth",
-  "baseBranch": "main"
+  "format": "github"
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `files` | array | No | Files to check (defaults to all changed files) |
-| `policy` | string | No | Policy: `default`, `strict`, `relaxed`, `ci-fast`, or custom ID |
-| `gates` | string | No | Comma-separated gates to run |
-| `format` | enum | No | Output: `text`, `json`, `github`, `gitlab`, `sarif` |
-| `verbose` | boolean | No | Include detailed output |
-| `branch` | string | No | Current branch name |
-| `baseBranch` | string | No | Base branch for comparison |
+**Policies:** `default`, `strict`, `relaxed`, `ci-fast`
 
-**Available Gates:**
-- `pattern-compliance` - Check if code follows established patterns
-- `constraint-verification` - Verify architectural constraints
-- `regression-detection` - Detect pattern regressions
-- `impact-simulation` - Analyze blast radius of changes
-- `security-boundary` - Validate data access boundaries
-- `custom-rules` - Run user-defined rules
+**Gates:** `pattern-compliance`, `constraint-verification`, `regression-detection`, `impact-simulation`, `security-boundary`, `custom-rules`
 
-**Available Policies:**
-- `default` - Balanced settings for most projects
-- `strict` - Strict settings for main/release branches
-- `relaxed` - Relaxed settings for feature branches
-- `ci-fast` - Minimal checks for fast CI feedback
+### `drift_decisions`
 
-**Example - Run all gates with strict policy:**
+Architectural decision records.
+
 ```json
 {
-  "policy": "strict"
+  "action": "list",
+  "status": "active"
 }
 ```
 
-**Example - Run specific gates only:**
+### `drift_constraints`
+
+Architectural constraints.
+
 ```json
 {
-  "gates": "pattern-compliance,security-boundary",
-  "verbose": true
+  "action": "list"
 }
 ```
 
-**Example - CI mode with GitHub annotations:**
+### `drift_simulate`
+
+Simulate changes before making them.
+
 ```json
 {
-  "format": "github",
-  "branch": "feature/auth",
-  "baseBranch": "main"
+  "file": "src/api/users.ts",
+  "change": "add new endpoint"
 }
 ```
 
 ---
 
-## Layer 6: Generation
+## Layer 7: Generation
+
+AI-assisted code generation and validation.
 
 ### `drift_suggest_changes`
 
@@ -539,13 +771,7 @@ AI-guided fix suggestions.
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `target` | string | Yes | File or function to analyze |
-| `issue` | enum | No | `outlier`, `security`, `coupling`, `error-handling`, `test-coverage`, `pattern-violation` |
-| `patternId` | string | No | Pattern ID for outlier issues |
-| `maxSuggestions` | number | No | Max suggestions |
+**Issue types:** `outlier`, `security`, `coupling`, `error-handling`, `test-coverage`, `pattern-violation`
 
 ### `drift_validate_change`
 
@@ -555,18 +781,19 @@ Validate proposed changes against patterns.
 {
   "file": "src/api/users.ts",
   "content": "// new code here",
-  "diff": "--- a/file\n+++ b/file\n...",
   "strictMode": false
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `file` | string | Yes | File path |
-| `content` | string | No | Proposed code content |
-| `diff` | string | No | Unified diff format |
-| `strictMode` | boolean | No | Fail on any violation |
+**Or with diff:**
+
+```json
+{
+  "file": "src/api/users.ts",
+  "diff": "--- a/file\n+++ b/file\n...",
+  "strictMode": true
+}
+```
 
 ### `drift_explain`
 
@@ -580,9 +807,281 @@ Comprehensive code explanation.
 }
 ```
 
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `target` | string | Yes | File, function, or symbol |
-| `depth` | enum | No | `summary`, `detailed`, `comprehensive` |
-| `focus` | string | No | `security`, `performance`, `architecture`, `testing` |
+**Depth options:** `summary`, `detailed`, `comprehensive`
+
+**Focus options:** `security`, `performance`, `architecture`, `testing`
+
+---
+
+## Language-Specific Tools
+
+All 8 languages have dedicated MCP tools for language-specific analysis.
+
+### `drift_typescript`
+
+TypeScript/JavaScript-specific analysis.
+
+```json
+{
+  "action": "status",
+  "path": "src/",
+  "framework": "express",
+  "limit": 50
+}
+```
+
+**Actions:**
+- `status` — Project overview (files, frameworks, stats)
+- `routes` — HTTP routes (Express, NestJS, Next.js, Fastify)
+- `components` — React components (functional, class)
+- `hooks` — React hooks usage (builtin, custom)
+- `errors` — Error handling patterns (try-catch, boundaries)
+- `data-access` — Database patterns (Prisma, TypeORM, Drizzle, Sequelize, Mongoose)
+- `decorators` — Decorator usage (NestJS, TypeORM)
+
+### `drift_python`
+
+Python-specific analysis.
+
+```json
+{
+  "action": "routes",
+  "framework": "fastapi"
+}
+```
+
+**Actions:**
+- `status` — Project overview
+- `routes` — HTTP routes (Flask, FastAPI, Django, Starlette)
+- `errors` — Error handling patterns (try-except, custom exceptions)
+- `data-access` — Database patterns (Django ORM, SQLAlchemy, Tortoise, Peewee)
+- `decorators` — Decorator usage
+- `async` — Async patterns (async/await, asyncio)
+
+### `drift_java`
+
+Java-specific analysis.
+
+```json
+{
+  "action": "annotations",
+  "framework": "spring"
+}
+```
+
+**Actions:**
+- `status` — Project overview
+- `routes` — HTTP routes (Spring MVC, JAX-RS, Micronaut, Quarkus)
+- `errors` — Error handling patterns (try-catch, exception handlers)
+- `data-access` — Database patterns (Spring Data JPA, Hibernate, JDBC, MyBatis)
+- `annotations` — Annotation usage (@RestController, @Service, etc.)
+
+### `drift_php`
+
+PHP-specific analysis.
+
+```json
+{
+  "action": "traits",
+  "framework": "laravel"
+}
+```
+
+**Actions:**
+- `status` — Project overview
+- `routes` — HTTP routes (Laravel, Symfony, Slim, Lumen)
+- `errors` — Error handling patterns (try-catch, custom exceptions)
+- `data-access` — Database patterns (Eloquent, Doctrine, PDO)
+- `traits` — Trait definitions and usage
+
+### `drift_go`
+
+Go-specific analysis.
+
+```json
+{
+  "action": "goroutines"
+}
+```
+
+**Actions:**
+- `status` — Project overview
+- `routes` — HTTP routes (Gin, Echo, Chi, Fiber, net/http)
+- `errors` — Error handling patterns
+- `interfaces` — Interface implementations
+- `data-access` — Database patterns (GORM, sqlx, database/sql)
+- `goroutines` — Concurrency patterns
+
+### `drift_rust`
+
+Rust-specific analysis.
+
+```json
+{
+  "action": "async"
+}
+```
+
+**Actions:**
+- `status` — Project overview
+- `routes` — HTTP routes (Actix, Axum, Rocket, Warp)
+- `errors` — Error handling (Result, thiserror, anyhow)
+- `traits` — Trait implementations
+- `data-access` — Database patterns (SQLx, Diesel, SeaORM)
+- `async` — Async patterns and runtime usage
+
+### `drift_cpp`
+
+C++-specific analysis.
+
+```json
+{
+  "action": "memory"
+}
+```
+
+**Actions:**
+- `status` — Project overview
+- `classes` — Class/struct analysis with inheritance
+- `memory` — Memory management (smart pointers, RAII)
+- `templates` — Template classes and functions
+- `virtual` — Virtual functions and polymorphism
+
+### `drift_wpf`
+
+WPF (C#) specific analysis.
+
+```json
+{
+  "action": "bindings"
+}
+```
+
+**Actions:**
+- `status` — Project overview
+- `bindings` — XAML data bindings
+- `mvvm` — MVVM compliance check
+- `datacontext` — DataContext resolution
+- `commands` — ICommand implementations
+
+---
+
+## Pattern Categories
+
+Available categories for filtering:
+
+| Category | Description |
+|----------|-------------|
+| `api` | REST endpoints, GraphQL resolvers |
+| `auth` | Authentication, authorization |
+| `security` | Security patterns, validation |
+| `errors` | Error handling patterns |
+| `logging` | Logging, observability |
+| `data-access` | Database queries, ORM usage |
+| `config` | Configuration patterns |
+| `testing` | Test patterns, mocks |
+| `performance` | Caching, optimization |
+| `components` | UI components |
+| `styling` | CSS, styling patterns |
+| `structural` | Code organization |
+| `types` | Type definitions |
+| `accessibility` | A11y patterns |
+| `documentation` | Doc patterns |
+
+---
+
+## Best Practices for AI Agents
+
+### 1. Start with `drift_context`
+
+For any code generation task, start here:
+
+```json
+{
+  "intent": "add_feature",
+  "focus": "the area you're working on"
+}
+```
+
+### 2. Use Surgical Tools for Precision
+
+When you need exactly one thing:
+
+```json
+// Need a signature?
+{ "tool": "drift_signature", "symbol": "functionName" }
+
+// Need callers?
+{ "tool": "drift_callers", "function": "functionName" }
+
+// Need imports?
+{ "tool": "drift_imports", "symbol": "TypeName" }
+```
+
+### 3. Validate Before Committing
+
+Always validate generated code:
+
+```json
+{
+  "tool": "drift_validate_change",
+  "file": "path/to/file.ts",
+  "content": "// generated code"
+}
+```
+
+### 4. Use Pagination for Large Results
+
+When results are paginated:
+
+```json
+// First call
+{ "limit": 20 }
+
+// Next page
+{ "limit": 20, "cursor": "returned_cursor" }
+```
+
+### 5. Check Hints for Next Steps
+
+Every response includes hints:
+
+```json
+{
+  "hints": {
+    "nextActions": ["What to do next"],
+    "relatedTools": ["Other useful tools"],
+    "warnings": ["Important warnings"]
+  }
+}
+```
+
+---
+
+## Infrastructure Features
+
+### Caching
+
+Responses are cached for repeated queries. Cache is invalidated when:
+- Files change
+- Patterns are approved/ignored
+- Call graph is rebuilt
+
+### Rate Limiting
+
+Prevents runaway tool calls. Default: 60 requests/minute.
+
+### Metrics
+
+Usage metrics are collected for:
+- Tool call frequency
+- Response times
+- Cache hit rates
+- Error rates
+
+### Warmup
+
+On startup, Drift warms up stores for instant responses:
+- Pattern store loaded
+- Call graph indexed
+- Boundary data cached

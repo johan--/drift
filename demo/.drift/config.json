@@ -1,9 +1,9 @@
 {
   "version": "2.0.0",
   "project": {
-    "id": "42d74a89-5b87-4db3-a503-3dfd6910b41f",
+    "id": "463f1d20-3c31-4edb-8eea-ba661486bb08",
     "name": "demo",
-    "initializedAt": "2026-01-27T00:34:11.478Z"
+    "initializedAt": "2026-01-27T01:13:00.445Z"
   },
   "severity": {},
   "ignore": [
@@ -47,7 +47,7 @@
     "sharePatternSignatures": true,
     "shareAggregateStats": true,
     "shareUserActions": false,
-    "installationId": "575ed219-7e51-4df3-baf2-b66bdd34af22",
-    "enabledAt": "2026-01-27T00:35:27.321Z"
+    "installationId": "8897a7ed-03ef-4089-aa69-725ea9f5cd6f",
+    "enabledAt": "2026-01-27T01:13:45.913Z"
   }
 }
