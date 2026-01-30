@@ -51,6 +51,8 @@ impl PhpParser {
             (function_call_expression function: [(name) @callee (qualified_name) @callee] arguments: (arguments) @args) @call
             (member_call_expression object: (_) @receiver name: (name) @callee arguments: (arguments) @args) @method_call
             (scoped_call_expression scope: (_) @receiver name: (name) @callee arguments: (arguments) @args) @static_call
+            (object_creation_expression (name) @callee arguments: (arguments)? @args) @new_call
+            (object_creation_expression (qualified_name (name) @callee) arguments: (arguments)? @args) @new_call_qualified
         "#).map_err(|e| format!("Failed to create call query: {}", e))?;
         
         Ok(Self { parser, function_query, class_query, use_query, call_query })
@@ -353,7 +355,7 @@ impl PhpParser {
                         receiver = Some(text.trim_start_matches('$').to_string()); 
                     }
                     "args" => { arg_count = node.named_child_count(); }
-                    "call" | "method_call" | "static_call" => { range = node_range(&node); }
+                    "call" | "method_call" | "static_call" | "new_call" | "new_call_qualified" => { range = node_range(&node); }
                     _ => {}
                 }
             }

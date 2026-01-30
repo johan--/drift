@@ -101,6 +101,11 @@ impl CSharpParser {
                 ]
                 arguments: (argument_list) @args
             ) @call
+            
+            (object_creation_expression
+                type: [(identifier) @callee (qualified_name (identifier) @callee) (generic_name (identifier) @callee)]
+                arguments: (argument_list)? @args
+            ) @new_call
             "#,
         ).map_err(|e| format!("Failed to create call query: {}", e))?;
         
@@ -930,7 +935,7 @@ impl CSharpParser {
                     "args" => {
                         arg_count = node.named_child_count();
                     }
-                    "call" => {
+                    "call" | "new_call" => {
                         range = node_range(&node);
                     }
                     _ => {}

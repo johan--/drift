@@ -87,6 +87,11 @@ impl JavaParser {
                 name: (identifier) @callee
                 arguments: (argument_list) @args
             ) @call
+            
+            (object_creation_expression
+                type: [(type_identifier) @callee (generic_type (type_identifier) @callee)]
+                arguments: (argument_list) @args
+            ) @new_call
             "#,
         ).map_err(|e| format!("Failed to create call query: {}", e))?;
         
@@ -568,7 +573,7 @@ impl JavaParser {
                     "args" => {
                         arg_count = node.named_child_count();
                     }
-                    "call" => {
+                    "call" | "new_call" => {
                         range = node_range(&node);
                     }
                     _ => {}

@@ -48,6 +48,7 @@ impl TypeScriptParser {
         
         let call_query = Query::new(&language.into(), r#"
             (call_expression function: [(identifier) @callee (member_expression object: (_) @receiver property: (property_identifier) @callee)] arguments: (arguments) @args) @call
+            (new_expression constructor: [(identifier) @callee (member_expression object: (_) @receiver property: (property_identifier) @callee)] arguments: (arguments) @args) @new_call
         "#).map_err(|e| format!("Failed to create call query: {}", e))?;
         
         Ok(Self { parser, function_query, class_query, import_query, export_query, call_query })
@@ -419,7 +420,7 @@ impl TypeScriptParser {
                     "callee" => callee = node.utf8_text(source).unwrap_or("").to_string(),
                     "receiver" => receiver = Some(node.utf8_text(source).unwrap_or("").to_string()),
                     "args" => arg_count = node.named_child_count(),
-                    "call" => range = node_range(&node),
+                    "call" | "new_call" => range = node_range(&node),
                     _ => {}
                 }
             }
