@@ -1,6 +1,6 @@
 {
   "name": "@drift/cibench",
-  "version": "0.9.41",
+  "version": "0.9.47",
   "private": true,
   "description": "CIBench - Frontier Codebase Intelligence Benchmark",
   "type": "module",

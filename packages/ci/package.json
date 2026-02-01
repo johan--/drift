@@ -1,6 +1,6 @@
 {
   "name": "driftdetect-ci",
-  "version": "0.9.46",
+  "version": "0.9.47",
   "description": "Autonomous CI agent for Drift - pattern enforcement, impact analysis, and learning from PRs",
   "license": "Apache-2.0",
   "repository": {
