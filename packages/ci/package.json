@@ -32,9 +32,9 @@
     "@octokit/rest": "^20.0.0",
     "@octokit/webhooks": "^12.0.0",
     "commander": "^11.0.0",
-    "driftdetect-core": "0.9.46",
-    "driftdetect-cortex": "0.9.46",
-    "driftdetect-detectors": "0.9.46",
+    "driftdetect-core": "0.9.47",
+    "driftdetect-cortex": "0.9.47",
+    "driftdetect-detectors": "0.9.47",
     "simple-git": "^3.30.0"
   },
   "devDependencies": {
